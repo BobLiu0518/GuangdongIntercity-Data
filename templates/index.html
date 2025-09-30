@@ -107,7 +107,7 @@
         <script>
             async function loadData() {
                 try {
-                    const summaryResponse = await fetch('./data/log.json');
+                    const summaryResponse = await fetch('/log.json');
                     if (summaryResponse.ok) {
                         const summary = await summaryResponse.json();
 
@@ -157,7 +157,7 @@
                         let filesHtml = '';
 
                         for (const file of files) {
-                            const url = `./data/${folder.date}/${file}`;
+                            const url = `/${folder.date}/${file}`;
                             filesHtml += `<a href="${url}" class="file-link" target="_blank">${file}</a>`;
                         }
 
