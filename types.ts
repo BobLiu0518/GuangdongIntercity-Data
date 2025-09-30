@@ -73,8 +73,8 @@ export type CRTrainResult = {
 
 export type TrainStop = {
     name: string;
-    arrive: Temporal.PlainTime;
-    depart: Temporal.PlainTime;
+    arrive: string;
+    depart: string;
 };
 
 export type Train = {
@@ -84,5 +84,5 @@ export type Train = {
 
 export type StopInfo = {
     code: string;
-    depart: Temporal.PlainTime;
+    depart: string;
 };

@@ -203,8 +203,8 @@ export async function fetchTrainData(targetDate?: string) {
 
             const stops: TrainStop[] = trainDetail.data.data.map((station) => ({
                 name: station.station_name.replaceAll(' ', ''),
-                arrive: Temporal.PlainTime.from(station.is_start ? station.start_time : station.arrive_time),
-                depart: Temporal.PlainTime.from(station.start_time),
+                arrive: station.is_start ? station.start_time : station.arrive_time,
+                depart: station.start_time,
             }));
             const code = generateTrainCode(trainDetail.data.data);
 
