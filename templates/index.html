@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>广东城际列车数据</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 40px;
+                line-height: 1.6;
+            }
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            .date-folder {
+                margin: 20px 0;
+                padding: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #fafafa;
+            }
+            .file-list {
+                margin: 10px 0;
+            }
+            .file-link {
+                display: inline-block;
+                margin: 5px 10px 5px 0;
+                padding: 5px 10px;
+                background: #f0f0f0;
+                text-decoration: none;
+                border-radius: 4px;
+                color: #333;
+                font-size: 0.9em;
+            }
+            .file-link:hover {
+                background: #e0e0e0;
+            }
+            .summary {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #007bff;
+            }
+            .update-time {
+                color: #666;
+                font-size: 0.9em;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+            }
+            .status-badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 0.8em;
+                font-weight: bold;
+            }
+            .status-success {
+                background: #d4edda;
+                color: #155724;
+            }
+            .status-cached {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .status-error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            .loading {
+                color: #666;
+            }
+            .error {
+                color: #dc3545;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>📊 广东城际列车数据</h1>
+            <p>本页面提供广东城际列车的实时数据，每日自动更新。数据来源于中国铁路12306官方API。</p>
+
+            <div class="summary">
+                <h3>📈 最新执行摘要</h3>
+                <div id="summary-content" class="loading">加载中...</div>
+            </div>
+
+            <h3>📁 可用数据文件</h3>
+            <div id="data-folders" class="loading">加载中...</div>
+
+            <div class="update-time">
+                <p>🕐 最后更新时间: <span id="last-update">-</span></p>
+                <p>🔄 数据自动更新时间: 每日北京时间凌晨 4:00</p>
+                <p>💾 数据格式说明:</p>
+                <ul>
+                    <li><code>trains.json</code> - 列车信息（对象格式）</li>
+                    <li><code>stations.json</code> - 站点信息（对象格式）</li>
+                    <li><code>trains.map.json</code> - 列车信息（数组格式）</li>
+                    <li><code>stations.map.json</code> - 站点信息（数组格式）</li>
+                </ul>
+            </div>
+        </div>
+
+        <script>
+            async function loadData() {
+                try {
+                    const summaryResponse = await fetch('./data/log.json');
+                    if (summaryResponse.ok) {
+                        const summary = await summaryResponse.json();
+
+                        const updateTime = new Date(summary.executionTime).toLocaleString('zh-CN', {
+                            timeZone: 'Asia/Shanghai',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                        });
+                        document.getElementById('last-update').textContent = updateTime;
+
+                        const summaryHtml = `
+                        <p><strong>总处理天数:</strong> ${summary.summary.total}</p>
+                        <p><strong>新获取:</strong> <span class="status-badge status-success">${summary.summary.fetched} 天</span></p>
+                        <p><strong>使用缓存:</strong> <span class="status-badge status-cached">${summary.summary.cached} 天</span></p>
+                        <p><strong>失败:</strong> <span class="status-badge status-error">${summary.summary.errors} 天</span></p>
+                    `;
+                        document.getElementById('summary-content').innerHTML = summaryHtml;
+                    } else {
+                        document.getElementById('summary-content').innerHTML = '<p class="error">无法加载执行摘要</p>';
+                    }
+
+                    const dataFolders = [];
+                    const today = new Date();
+                    for (let i = 0; i < 4; i++) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() + i);
+                        const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+                        dataFolders.push({
+                            date: dateStr,
+                            displayDate: date.toLocaleDateString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                weekday: 'short',
+                            }),
+                            isToday: i === 0,
+                        });
+                    }
+
+                    let foldersHtml = '';
+                    for (const folder of dataFolders) {
+                        const files = ['trains.json', 'stations.json', 'trains.map.json', 'stations.map.json'];
+                        let filesHtml = '';
+
+                        for (const file of files) {
+                            const url = `./data/${folder.date}/${file}`;
+                            filesHtml += `<a href="${url}" class="file-link" target="_blank">${file}</a>`;
+                        }
+
+                        const todayMark = folder.isToday ? ' <span class="status-badge status-success">今天</span>' : '';
+                        foldersHtml += `
+                        <div class="date-folder">
+                            <h4>📅 ${folder.displayDate} (${folder.date})${todayMark}</h4>
+                            <div class="file-list">${filesHtml}</div>
+                        </div>
+                    `;
+                    }
+
+                    document.getElementById('data-folders').innerHTML = foldersHtml;
+                } catch (error) {
+                    console.error('加载数据时出错:', error);
+                    document.getElementById('summary-content').innerHTML = '<p class="error">加载摘要数据失败</p>';
+                    document.getElementById('data-folders').innerHTML = '<p class="error">加载数据文件列表失败</p>';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', loadData);
+        </script>
+    </body>
+</html>

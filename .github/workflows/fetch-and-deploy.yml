@@ -1,0 +1,58 @@
+name: Fetch and Deploy
+
+on:
+    schedule:
+        - cron: '0 20 * * *'
+
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    fetch-and-deploy:
+        runs-on: ubuntu-latest
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
+              with:
+                  deno-version: '2.5.2'
+
+            - name: Restore data cache
+              uses: actions/cache@v4
+              with:
+                  path: data/
+                  key: train-data-${{ github.run_number }}
+                  restore-keys: train-data-
+
+            - name: Fetch train data
+              run: deno task fetch
+
+            - name: Create GitHub Pages content
+              run: cp templates/index.html data/
+
+            - name: Configure GitHub Pages
+              uses: actions/configure-pages@v5
+
+            - name: Upload to GitHub Pages
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: data/
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4

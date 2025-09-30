@@ -1,0 +1,10 @@
+{
+    "tasks": {
+        "start": "deno run --allow-net --allow-write index.ts",
+        "fetch": "deno run --allow-net --allow-read --allow-write fetch.ts"
+    },
+    "unstable": ["temporal"],
+    "compilerOptions": {
+        "lib": ["deno.window", "deno.unstable"]
+    }
+}
