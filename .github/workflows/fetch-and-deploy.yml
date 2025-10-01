@@ -43,7 +43,7 @@ jobs:
               run: deno task fetch
 
             - name: Create GitHub Pages content
-              run: cp templates/index.html data/
+              run: cp templates/* data/
 
             - name: Configure GitHub Pages
               uses: actions/configure-pages@v5
