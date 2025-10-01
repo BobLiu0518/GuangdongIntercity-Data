@@ -20,9 +20,9 @@ function checkDataExists(dateStr: string): boolean {
 }
 
 function getDateString(daysOffset: number): string {
-    const today = Temporal.Now.plainDateISO();
+    const today = Temporal.Now.zonedDateTimeISO('Asia/Shanghai');
     const targetDate = today.add({ days: daysOffset });
-    return targetDate.toString();
+    return targetDate.toPlainDate().toString();
 }
 
 async function main() {
@@ -89,7 +89,7 @@ async function main() {
     console.log(`失败: ${errorCount} 天`);
 
     const summaryData = {
-        executionTime: Temporal.Now.instant().toString(),
+        executionTime: Temporal.Now.zonedDateTimeISO('Asia/Shanghai').toString(),
         results: results,
         summary: {
             total: results.length,
